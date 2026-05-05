@@ -309,25 +309,42 @@ export default function App() {
 }
 
 function ContactModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
-  const [status, setStatus] = React.useState<'idle' | 'success'>('idle');
+  const [status, setStatus] = React.useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     
-    // Create mailto link
-    const subject = encodeURIComponent(`Nouveau message de ${data.name}: ${data.subject}`);
-    const body = encodeURIComponent(`Nom: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`);
-    window.location.href = `mailto:sendramalalarandrianasolo@gmail.com?subject=${subject}&body=${body}`;
-    
-    setStatus('success');
-    setTimeout(() => {
-      onClose();
-      setStatus('idle');
-    }, 3000);
+    try {
+      setStatus('sending');
+      // Utilisation de FormSubmit (version AJAX) pour envoyer l'email sans recharger la page
+      const response = await fetch("https://formsubmit.co/ajax/sendramalalarandrianasolo@gmail.com", {
+        method: "POST",
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(Object.fromEntries(formData)),
+      });
+
+      if (response.ok) {
+        setStatus('success');
+        form.reset();
+        setTimeout(() => {
+          onClose();
+          setStatus('idle');
+        }, 4000);
+      } else {
+        throw new Error("Failed to send");
+      }
+    } catch (error) {
+      console.error(error);
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
+    }
   };
 
   return (
@@ -360,8 +377,20 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
               </div>
               <h3 className="text-2xl font-bold mb-4">Message envoyé !</h3>
               <p className="text-white/60">
-                L'application mail de votre appareil s'est ouverte.<br />
+                L'email a bien été transmis.<br />
                 Je vous répondrai sous 24h.
+              </p>
+            </div>
+          ) : status === 'error' ? (
+            <div className="py-12 text-center">
+              <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <X className="w-10 h-10 text-red-500" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Oups...</h3>
+              <p className="text-white/60">
+                Une erreur est survenue lors de l'envoi.<br />
+                Veuillez réessayer ou m'envoyer un email à :<br />
+                <span className="text-brand-primary">sendramalalarandrianasolo@gmail.com</span>
               </p>
             </div>
           ) : (
@@ -372,6 +401,9 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Anti-spam field pour FormSubmit */}
+                <input type="hidden" name="_captcha" value="false" />
+                
                 <div className="grid md:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <label className="text-[12px] font-bold uppercase tracking-widest text-white/40 ml-1">Nom / Entreprise</label>
@@ -418,10 +450,15 @@ function ContactModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
                 </div>
 
                 <button 
+                  disabled={status === 'sending'}
                   type="submit"
-                  className="w-full h-[64px] bg-brand-primary hover:brightness-110 text-white font-bold rounded-[12px] transition-all flex items-center justify-center gap-3 group text-[18px] mt-4"
+                  className="w-full h-[64px] bg-brand-primary hover:brightness-110 text-white font-bold rounded-[12px] transition-all flex items-center justify-center gap-3 group text-[18px] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Envoyer le message <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  {status === 'sending' ? (
+                    'Envoi en cours...'
+                  ) : (
+                    <>Envoyer le message <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                  )}
                 </button>
               </form>
             </>
