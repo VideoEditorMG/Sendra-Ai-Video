@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 
 export default function App() {
+  const [isContactModalOpen, setIsContactModalOpen] = React.useState(false);
+
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -45,10 +47,10 @@ export default function App() {
             <div className="hidden lg:flex items-center gap-[42px] text-[16px] font-semibold uppercase tracking-widest text-white">
               <button onClick={() => scrollTo('portfolio')} className="hover:text-brand-primary transition-colors cursor-pointer">Portfolio</button>
               <button onClick={() => scrollTo('methode')} className="hover:text-brand-primary transition-colors cursor-pointer">Méthode</button>
-              <button onClick={() => scrollTo('contact')} className="hover:text-brand-primary transition-colors cursor-pointer">Contact</button>
+              <button onClick={() => setIsContactModalOpen(true)} className="hover:text-brand-primary transition-colors cursor-pointer">Contact</button>
             </div>
             <button 
-              onClick={() => scrollTo('contact')}
+              onClick={() => setIsContactModalOpen(true)}
               className="hidden md:block w-[170px] h-[54px] border-[1.5px] border-brand-primary rounded-[10px] text-[15px] font-bold uppercase tracking-widest hover:bg-brand-primary transition-all text-white"
             >
               Prendre contact
@@ -112,7 +114,7 @@ export default function App() {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
               <button 
-                onClick={() => scrollTo('contact')}
+                onClick={() => setIsContactModalOpen(true)}
                 className="flex items-center justify-center w-[220px] h-[56px] border-[1.5px] border-white/20 rounded-[8px] text-[16px] font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-white"
               >
                 Me contacter
@@ -227,7 +229,7 @@ export default function App() {
               </p>
             </div>
             <button 
-              onClick={() => scrollTo('contact')}
+              onClick={() => setIsContactModalOpen(true)}
               className="w-full md:w-auto px-12 h-[64px] bg-brand-primary hover:brightness-110 text-white font-bold rounded-[8px] transition-all flex items-center justify-center gap-3 group text-[18px]"
             >
               Me contacter <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -271,7 +273,7 @@ export default function App() {
               <ul className="space-y-2 text-[14px] text-[#B8B8B8] font-medium leading-loose">
                 <li><button onClick={() => scrollTo('portfolio')} className="hover:text-brand-primary transition-colors">Portfolio</button></li>
                 <li><button onClick={() => scrollTo('methode')} className="hover:text-brand-primary transition-colors">Méthode</button></li>
-                <li><button onClick={() => scrollTo('contact')} className="hover:text-brand-primary transition-colors">Contact</button></li>
+                <li><button onClick={() => setIsContactModalOpen(true)} className="hover:text-brand-primary transition-colors">Contact</button></li>
               </ul>
             </div>
 
@@ -299,6 +301,133 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Contact Modal */}
+      <ContactModal isOpen={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
+    </div>
+  );
+}
+
+function ContactModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+  const [status, setStatus] = React.useState<'idle' | 'success'>('idle');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData);
+    
+    // Create mailto link
+    const subject = encodeURIComponent(`Nouveau message de ${data.name}: ${data.subject}`);
+    const body = encodeURIComponent(`Nom: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`);
+    window.location.href = `mailto:sendramalalarandrianasolo@gmail.com?subject=${subject}&body=${body}`;
+    
+    setStatus('success');
+    setTimeout(() => {
+      onClose();
+      setStatus('idle');
+    }, 3000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+      />
+      
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-[600px] bg-[#0A0A0A] border border-white/10 rounded-[24px] overflow-hidden shadow-2xl"
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        <div className="p-8 md:p-12">
+          {status === 'success' ? (
+            <div className="py-12 text-center">
+              <div className="w-20 h-20 bg-brand-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Zap className="w-10 h-10 text-brand-primary" />
+              </div>
+              <h3 className="text-2xl font-bold mb-4">Message envoyé !</h3>
+              <p className="text-white/60">
+                L'application mail de votre appareil s'est ouverte.<br />
+                Je vous répondrai sous 24h.
+              </p>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold mb-2">Parlons de votre projet</h2>
+              <p className="text-white/40 mb-8 font-light">
+                Remplissez le formulaire ci-dessous et je vous contacterai rapidement.
+              </p>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-[12px] font-bold uppercase tracking-widest text-white/40 ml-1">Nom / Entreprise</label>
+                    <input 
+                      required
+                      name="name"
+                      type="text" 
+                      placeholder="Votre nom"
+                      className="w-full h-[54px] bg-white/5 border border-white/10 rounded-[12px] px-5 focus:border-brand-primary/50 focus:outline-none transition-all placeholder:text-white/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[12px] font-bold uppercase tracking-widest text-white/40 ml-1">Email</label>
+                    <input 
+                      required
+                      name="email"
+                      type="email" 
+                      placeholder="votre@email.com"
+                      className="w-full h-[54px] bg-white/5 border border-white/10 rounded-[12px] px-5 focus:border-brand-primary/50 focus:outline-none transition-all placeholder:text-white/20"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold uppercase tracking-widest text-white/40 ml-1">Sujet</label>
+                  <input 
+                    required
+                    name="subject"
+                    type="text" 
+                    placeholder="De quoi s'agit-il ?"
+                    className="w-full h-[54px] bg-white/5 border border-white/10 rounded-[12px] px-5 focus:border-brand-primary/50 focus:outline-none transition-all placeholder:text-white/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold uppercase tracking-widest text-white/40 ml-1">Message</label>
+                  <textarea 
+                    required
+                    name="message"
+                    placeholder="Détaillez votre projet..."
+                    rows={4}
+                    className="w-full bg-white/5 border border-white/10 rounded-[12px] p-5 focus:border-brand-primary/50 focus:outline-none transition-all placeholder:text-white/20 resize-none"
+                  ></textarea>
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full h-[64px] bg-brand-primary hover:brightness-110 text-white font-bold rounded-[12px] transition-all flex items-center justify-center gap-3 group text-[18px] mt-4"
+                >
+                  Envoyer le message <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 }
