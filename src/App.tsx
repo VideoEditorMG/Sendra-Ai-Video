@@ -85,7 +85,7 @@ export default function App() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col items-center w-full"
+            className="flex flex-col items-center w-full scale-[1.2] -translate-y-[20%]"
           >
             {/* Titre Principal Compact - 3 Lignes (Rétabli) */}
             <h1 className="font-impact leading-[0.88] text-center uppercase mb-8 select-none w-full tracking-[-1px]">
